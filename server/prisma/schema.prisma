@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // For production, change to: postgresql://USER:PASSWORD@HOST:5432/signalpro
+  // For local development, use: file../../data/signalpro.db
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ──────────────────────────────────────────────────────────────────────
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String    // bcrypt hashed
+  name          String
+  plan          String    @default("free") // free | pro | enterprise
+  paypalOrderId String?
+  paypalSubscriptionId String?
+  subscriptionStatus String? // ACTIVE | CANCELLED | PAID
+  subscriptionEnd   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  signals      Signal[]
+  upvotes      Upvote[]
+}
+
+// ─── Signal ────────────────────────────────────────────────────────────────────
+model Signal {
+  id          String    @id @default(uuid())
+  type        String    // buy | sell | hold
+  symbol      String
+  name        String
+  price       Float
+  target      Float
+  stop        Float
+  confidence  Float
+  market      String    // US Stock | Crypto | Forex
+  reason      String
+  agentName   String
+  agentAvatar String
+  upvotesCount Int       @default(0)
+  comments    Int       @default(0)
+  tags        String    // JSON string array
+  pnl         Float?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  upvotes     Upvote[]
+}
+
+// ─── Upvote ─────────────────────────────────────────────────────────────────────
+model Upvote {
+  id        String  @id @default(uuid())
+  userId    String
+  signalId  String
+  user      User    @relation(fields: [userId], references: [id])
+  signal    Signal  @relation(fields: [signalId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, signalId])
+}
+
+// ─── Payment ───────────────────────────────────────────────────────────────────
+model Payment {
+  id        String   @id @default(uuid())
+  userId    String
+  orderId   String   @unique
+  amount    Float
+  currency  String   @default("USD")
+  status    String   // CREATED | APPROVED | COMPLETED | REFUNDED | CANCELLED
+  plan      String   // pro | enterprise
+  createdAt DateTime @default(now())
+}
