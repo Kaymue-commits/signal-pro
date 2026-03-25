@@ -6,9 +6,7 @@ generator client {
 }
 
 datasource db {
-  // For production, change to: postgresql://USER:PASSWORD@HOST:5432/signalpro
-  // For local development, use: file../../data/signalpro.db
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
